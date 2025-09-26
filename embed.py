@@ -3,7 +3,7 @@ from tqdm import tqdm
 import pandas as pd
 import PyPDF2
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 def get_paths_to_files(path: Path) -> List[Path]:
     return [file for file in path.rglob('*') if file.is_file()]
@@ -35,20 +35,23 @@ def split_text_into_chunks(text: str, max_chunk_length: int) -> List[str]:
 def generate_embeddings(chunks: List[str], model: SentenceTransformer) -> List[List[float]]:
     return [[float(j) for j in i] for i in model.encode(chunks, show_progress_bar=False)]
 
+def process_pdf(path: Path, model: SentenceTransformer, max_chunk_length: int = 256) -> List[Tuple[Path, List[float]]]:
+    """Process a PDF, split into chunks, and generate embeddings"""
+    content = read_pdf(path)
+    chunks = split_text_into_chunks(content, max_chunk_length)
+    embeddings = generate_embeddings(chunks, model)
+    return [(path, embedding) for embedding in embeddings]
+
 def main(data_folder: Path, model: SentenceTransformer):
-    df = pd.DataFrame({'path': [], 'embedding': []})
     files = get_paths_to_files(data_folder)
 
+    rows = []
+
     for path in tqdm(files):
-        content = read_pdf(path)
-        chunks = split_text_into_chunks(content, 256)
-        embeddings = generate_embeddings(chunks, model)
-
-        new_rows = [(path, embedding) for embedding in embeddings]
-        new_df = pd.DataFrame(new_rows, columns=['path', 'embedding'])
-
-        df = pd.concat([df, new_df], ignore_index=True)
-
+        for path_embedding_tuple in process_pdf(path, model):
+            rows.append(path_embedding_tuple)
+    
+    df = pd.DataFrame(rows, columns=['path', 'embedding'])
     df.to_csv(f'{data_folder}.csv', sep=";", index=False)
 
 if __name__ == "__main__":
