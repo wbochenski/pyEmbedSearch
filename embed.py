@@ -3,12 +3,12 @@ from tqdm import tqdm
 import pandas as pd
 import PyPDF2
 from pathlib import Path
+from typing import List
 
-def get_paths_to_files(folder_path: str):
-    folder = Path(folder_path)
-    return [file for file in folder.rglob('*') if file.is_file()]
+def get_paths_to_files(path: Path) -> List[Path]:
+    return [file for file in path.rglob('*') if file.is_file()]
 
-def read_pdf(pdf_path: str) -> str:
+def read_pdf(pdf_path: Path) -> str:
     with open(pdf_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
         text = ""
@@ -17,7 +17,7 @@ def read_pdf(pdf_path: str) -> str:
             text += page.extract_text()
     return text
 
-def split_text_into_chunks(text, max_chunk_length):
+def split_text_into_chunks(text: str, max_chunk_length: int) -> List[str]:
     """ Split text into chunks while avoiding splitting in the middle of a sentence """
     sentences = text.split('. ')
     chunks = []
@@ -32,18 +32,18 @@ def split_text_into_chunks(text, max_chunk_length):
         chunks.append(chunk)
     return chunks
 
-def generate_embeddings(text, model):
+def generate_embeddings(text: List[str], model: SentenceTransformer) -> List[List[float]]:
     embeddings = [model.encode(chunk).tolist() for chunk in text]
     return embeddings
 
-def main(data_folder, model):
+def main(data_folder: Path, model: SentenceTransformer):
     df = pd.DataFrame({'path': [], 'embedding': []})
     files = get_paths_to_files(data_folder)
 
     for path in tqdm(files):
         content = read_pdf(path)
-        content = split_text_into_chunks(content, 256)
-        embeddings = generate_embeddings(content, model)
+        chunks = split_text_into_chunks(content, 256)
+        embeddings = generate_embeddings(chunks, model)
 
         new_rows = [(path, embedding) for embedding in embeddings]
         new_df = pd.DataFrame(new_rows, columns=['path', 'embedding'])
@@ -54,4 +54,4 @@ def main(data_folder, model):
 
 if __name__ == "__main__":
     model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-    main("data", model)
+    main(Path("data"), model)
