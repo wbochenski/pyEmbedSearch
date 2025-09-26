@@ -18,7 +18,19 @@ def read_pdf(pdf_path: str) -> str:
     return text
 
 def split_text_into_chunks(text, max_chunk_length):
-      return [text[i:i + max_chunk_length] for i in range(0, len(text), int(max_chunk_length/2))]
+    """ Split text into chunks while avoiding splitting in the middle of a sentence """
+    sentences = text.split('. ')
+    chunks = []
+    chunk = ""
+    for sentence in sentences:
+        if len(chunk) + len(sentence) + 1 > max_chunk_length:
+            chunks.append(chunk)
+            chunk = sentence
+        else:
+            chunk = chunk + ". " + sentence if chunk else sentence
+    if chunk:
+        chunks.append(chunk)
+    return chunks
 
 def generate_embeddings(text, model):
     embeddings = [model.encode(chunk).tolist() for chunk in text]
