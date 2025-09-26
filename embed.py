@@ -2,15 +2,11 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 import pandas as pd
 import PyPDF2
-import os
+from pathlib import Path
 
 def get_paths_to_files(folder_path: str):
-    file_paths = []
-    for root, dirs, files in os.walk(folder_path):
-        for file in files:
-            full_path = os.path.join(root, file)
-            file_paths.append(full_path)
-    return file_paths
+    folder = Path(folder_path)
+    return [file for file in folder.rglob('*') if file.is_file()]
 
 def read_pdf(pdf_path: str) -> str:
     with open(pdf_path, 'rb') as file:
