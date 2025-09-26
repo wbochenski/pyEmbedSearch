@@ -1,4 +1,4 @@
-# pyEmbeddedSearch
+# pyEmbedSearch
 
 This project uses natural language processing (NLP) techniques to build a search engine that can find the most similar content to a user query based on PDF documents. The core of this system is based on Sentence Transformers to generate embeddings from document contents, which are then compared to query embeddings to retrieve the most relevant results.
 
