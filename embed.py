@@ -32,9 +32,8 @@ def split_text_into_chunks(text: str, max_chunk_length: int) -> List[str]:
         chunks.append(chunk)
     return chunks
 
-def generate_embeddings(text: List[str], model: SentenceTransformer) -> List[List[float]]:
-    embeddings = [model.encode(chunk).tolist() for chunk in text]
-    return embeddings
+def generate_embeddings(chunks: List[str], model: SentenceTransformer) -> List[List[float]]:
+    return [[float(j) for j in i] for i in model.encode(chunks, show_progress_bar=False)]
 
 def main(data_folder: Path, model: SentenceTransformer):
     df = pd.DataFrame({'path': [], 'embedding': []})
